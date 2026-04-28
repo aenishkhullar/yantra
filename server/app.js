@@ -1,16 +1,22 @@
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
+const marketRoutes = require('./routes/marketRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const journalRoutes = require('./routes/journalRoutes');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
-const authRoutes = require("./routes/authRoutes");
-app.use("/api/auth", authRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/market', marketRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/journal', journalRoutes);
 
-app.get("/api/health", (req, res) => {
-    res.json({ success: true, message: "Yantra API is running" });
-});
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 module.exports = app;

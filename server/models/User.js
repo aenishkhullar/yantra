@@ -45,4 +45,6 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+userSchema.set('strict', true);
+
 module.exports = mongoose.model("User", userSchema);

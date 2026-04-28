@@ -49,10 +49,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const data = await getMeService();
+      setUser(data.user || data);
+    } catch (err) {
+      console.error('refreshUser failed:', err);
+    }
+  };
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, isAuthenticated, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

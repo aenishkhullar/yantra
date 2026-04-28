@@ -5,15 +5,18 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Markets from './pages/Markets';
 import Trading from './pages/Trading';
 import Portfolio from './pages/Portfolio';
-import OrderHistory from './pages/OrderHistory';
 import Analytics from './pages/Analytics';
 import Journal from './pages/Journal';
-import Leaderboard from './pages/Leaderboard';
-import Settings from './pages/Settings';
+
+// Mock imports for routes that aren't created yet but are referenced in Sidebar/Topbar
+const OrderHistory = () => <div style={{color: '#f0f0f0'}}>Order History coming soon...</div>;
+const Leaderboard = () => <div style={{color: '#f0f0f0'}}>Leaderboard coming soon...</div>;
+const Settings = () => <div style={{color: '#f0f0f0'}}>Settings coming soon...</div>;
 
 const Spinner = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100vw', background: '#000000', color: '#f0f0f0' }}>
@@ -32,7 +35,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return <AppLayout />;
 };
 
 const router = createBrowserRouter([
