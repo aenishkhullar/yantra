@@ -4,32 +4,25 @@ import { useAuth } from '../../context/AuthContext';
 
 function getMarketStatus() {
   const now = new Date();
-  const utcHour = now.getUTCHours();
-  const utcMinute = now.getUTCMinutes();
-  const utcDay = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  const totalUTCMinutes = utcHour * 60 + utcMinute;
+  
+  // Use Intl.DateTimeFormat to get the current time in New York (handles EDT/EST automatically)
+  const nyTimeStr = now.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+  const nyDate = new Date(nyTimeStr);
+  
+  const hour = nyDate.getHours();
+  const minute = nyDate.getMinutes();
+  const day = nyDate.getDay(); // 0 = Sunday, 6 = Saturday
+  const isWeekday = day >= 1 && day <= 5;
+  const totalMinutes = hour * 60 + minute;
 
-  const isWeekday = utcDay >= 1 && utcDay <= 5;
+  // NYSE hours: 9:30 AM ET to 4:00 PM ET
+  const nyseOpen = 9 * 60 + 30;  // 570 minutes
+  const nyseClose = 16 * 60;      // 960 minutes
+  
+  const isOpen = isWeekday && totalMinutes >= nyseOpen && totalMinutes < nyseClose;
 
-  // NSE hours: 3:45 AM UTC to 10:00 AM UTC (Mon–Fri)
-  // (IST 9:15 AM – 3:30 PM = UTC 3:45 AM – 10:00 AM)
-  const nseOpen = 3 * 60 + 45;   // 225 minutes
-  const nseClose = 10 * 60;       // 600 minutes
-  const nseIsOpen =
-    isWeekday && totalUTCMinutes >= nseOpen && totalUTCMinutes < nseClose;
-
-  // NYSE hours: 14:30 UTC to 21:00 UTC (Mon–Fri)
-  const nyseOpen = 14 * 60 + 30;  // 870 minutes
-  const nyseClose = 21 * 60;       // 1260 minutes
-  const nyseIsOpen =
-    isWeekday && totalUTCMinutes >= nyseOpen && totalUTCMinutes < nyseClose;
-
-  if (nseIsOpen && nyseIsOpen) {
-    return { label: 'NSE & NYSE Open', color: '#11ff99', open: true };
-  } else if (nseIsOpen) {
-    return { label: 'NSE Open', color: '#11ff99', open: true };
-  } else if (nyseIsOpen) {
-    return { label: 'NYSE Open', color: '#11ff99', open: true };
+  if (isOpen) {
+    return { label: 'Market Open', color: '#11ff99', open: true };
   } else {
     return { label: 'Market Closed', color: '#ff2047', open: false };
   }
@@ -141,7 +134,7 @@ const Topbar = () => {
               {displayName}
             </span>
             <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '12px', color: '#a1a4a5', marginTop: '2px' }}>
-              ₹{virtualBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+              ${virtualBalance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>

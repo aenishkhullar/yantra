@@ -56,8 +56,7 @@ const EmptyState = ({ message }) => (
 const StockRow = ({ stock, index }) => {
   const navigate = useNavigate();
   const isPositive = stock.changePercent >= 0;
-  const isIndian = stock.symbol.endsWith('.NS');
-  const currency = isIndian ? '₹' : '$';
+  const currency = '$';
   
   const formatVolume = (vol) => {
     if (!vol) return '--';
@@ -96,7 +95,7 @@ const StockRow = ({ stock, index }) => {
             border: '1px solid rgba(214, 235, 253, 0.19)',
             color: '#464a4d'
           }}>
-            {isIndian ? 'NSE' : 'US'}
+            US
           </span>
         </div>
       </div>
@@ -154,7 +153,7 @@ const Markets = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('Indian Stocks');
+  const [activeTab, setActiveTab] = useState('US Stocks');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
@@ -186,10 +185,7 @@ const Markets = () => {
       stock.symbol.toLowerCase().includes(search.toLowerCase()) ||
       (stock.name && stock.name.toLowerCase().includes(search.toLowerCase()));
 
-    const matchesTab =
-      activeTab === 'US Stocks'
-        ? !stock.symbol.includes('.NS')
-        : stock.symbol.includes('.NS');
+    const matchesTab = true; // All stocks are US now
 
     return matchesSearch && matchesTab;
   });
@@ -235,36 +231,19 @@ const Markets = () => {
 
         <div style={{ display: 'flex', gap: '4px' }}>
           <button 
-            onClick={() => setActiveTab('US Stocks')}
             style={{
               padding: '6px 16px',
               borderRadius: '9999px',
-              background: activeTab === 'US Stocks' ? '#ffffff' : 'transparent',
-              color: activeTab === 'US Stocks' ? '#000000' : '#a1a4a5',
-              border: activeTab === 'US Stocks' ? '1px solid #ffffff' : '1px solid rgba(214, 235, 253, 0.19)',
+              background: '#ffffff',
+              color: '#000000',
+              border: '1px solid #ffffff',
               fontFamily: "'Inter', ui-sans-serif, system-ui",
               fontSize: '13px',
               fontWeight: 500,
-              cursor: 'pointer'
+              cursor: 'default'
             }}
           >
             US Stocks
-          </button>
-          <button 
-            onClick={() => setActiveTab('Indian Stocks')}
-            style={{
-              padding: '6px 16px',
-              borderRadius: '9999px',
-              background: activeTab === 'Indian Stocks' ? '#ffffff' : 'transparent',
-              color: activeTab === 'Indian Stocks' ? '#000000' : '#a1a4a5',
-              border: activeTab === 'Indian Stocks' ? '1px solid #ffffff' : '1px solid rgba(214, 235, 253, 0.19)',
-              fontFamily: "'Inter', ui-sans-serif, system-ui",
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            Indian Stocks
           </button>
         </div>
 

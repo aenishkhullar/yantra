@@ -17,16 +17,6 @@ const STOCK_META = {
   'NFLX': { name: 'Netflix Inc.', exchange: 'NASDAQ' },
   'AMD': { name: 'Advanced Micro Devices', exchange: 'NASDAQ' },
   'UBER': { name: 'Uber Technologies', exchange: 'NYSE' },
-  'RELIANCE.NS': { name: 'Reliance Industries', exchange: 'NSE' },
-  'TCS.NS': { name: 'Tata Consultancy Services', exchange: 'NSE' },
-  'INFY.NS': { name: 'Infosys Limited', exchange: 'NSE' },
-  'HDFCBANK.NS': { name: 'HDFC Bank', exchange: 'NSE' },
-  'WIPRO.NS': { name: 'Wipro Limited', exchange: 'NSE' },
-  'ICICIBANK.NS': { name: 'ICICI Bank', exchange: 'NSE' },
-  'BAJFINANCE.NS': { name: 'Bajaj Finance', exchange: 'NSE' },
-  'TATAMOTORS.NS': { name: 'Tata Motors', exchange: 'NSE' },
-  'ADANIENT.NS': { name: 'Adani Enterprises', exchange: 'NSE' },
-  'MARUTI.NS': { name: 'Maruti Suzuki', exchange: 'NSE' }
 };
 
 const Trading = () => {
@@ -87,8 +77,7 @@ const Trading = () => {
 
   const stockName = STOCK_META[symbol]?.name || symbol;
   const isPositive = quote?.changePercent >= 0;
-  const isIndian = symbol.endsWith('.NS');
-  const currency = isIndian ? '₹' : '$';
+  const currency = '$';
 
   const showToast = (message, type = 'success') => {
     const toast = document.createElement('div');
@@ -186,7 +175,7 @@ const Trading = () => {
               border: '1px solid rgba(214, 235, 253, 0.19)',
               color: '#464a4d'
             }}>
-              {isIndian ? 'NSE' : 'US'}
+              US
             </span>
           </div>
         </div>
@@ -460,7 +449,7 @@ const Trading = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '12px', color: '#a1a4a5' }}>Available Balance</span>
                 <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '13px', color: '#a1a4a5' }}>
-                  ₹{virtualBalance.toFixed(2)}
+                  ${virtualBalance.toFixed(2)}
                 </span>
               </div>
               <div style={{ borderTop: '1px solid rgba(214, 235, 253, 0.19)' }}></div>

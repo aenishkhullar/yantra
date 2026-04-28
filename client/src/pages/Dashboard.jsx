@@ -166,7 +166,7 @@ const Dashboard = () => {
                       <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '11px', color: '#a1a4a5' }}>{stock.symbol}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '13px', color: '#f0f0f0' }}>{stock.symbol.endsWith('.NS') ? '₹' : '$'}{stock.price?.toFixed(2)}</span>
+                      <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '13px', color: '#f0f0f0' }}>${stock.price?.toFixed(2)}</span>
                       <span style={{ 
                         fontFamily: "'Inter', ui-sans-serif, system-ui", 
                         fontSize: '11px', 

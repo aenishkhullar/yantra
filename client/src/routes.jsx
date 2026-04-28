@@ -12,10 +12,10 @@ import Trading from './pages/Trading';
 import Portfolio from './pages/Portfolio';
 import Analytics from './pages/Analytics';
 import Journal from './pages/Journal';
+import Leaderboard from './pages/Leaderboard';
 
 // Mock imports for routes that aren't created yet but are referenced in Sidebar/Topbar
 const OrderHistory = () => <div style={{color: '#f0f0f0'}}>Order History coming soon...</div>;
-const Leaderboard = () => <div style={{color: '#f0f0f0'}}>Leaderboard coming soon...</div>;
 const Settings = () => <div style={{color: '#f0f0f0'}}>Settings coming soon...</div>;
 
 const Spinner = () => (

@@ -7,45 +7,18 @@ const BASE_URL = 'https://finnhub.io/api/v1';
 const cache = {};
 const CACHE_TTL = 60 * 1000;
 
-const SYMBOL_MAP = {
-  'INFY': 'INFY',
-  'HDB':  'HDB',
-  'WIT':  'WIT',
-  'IBN':  'IBN',
-  'TTM':  'TTM',
-};
-
-const toFinnhubSymbol = (symbol) => {
-  if (symbol in SYMBOL_MAP) return SYMBOL_MAP[symbol];
-  return symbol;
-};
-
-// Yahoo Finance symbol map for history
-// Finnhub ADR symbols map back to Yahoo tickers
-const toYahooSymbol = (symbol) => {
-  const map = {
-    'INFY': 'INFY',
-    'HDB':  'HDB',
-    'WIT':  'WIT',
-    'IBN':  'IBN',
-    'TTM':  'TTM',
-  };
-  return map[symbol] || symbol;
-};
-
 // ─── LIVE QUOTES via Finnhub ───────────────────────────────
 
 const getQuote = async (symbol) => {
-  const finnhubSymbol = toFinnhubSymbol(symbol);
-  if (!finnhubSymbol) return null;
+  if (!symbol) return null;
 
   try {
     const [quoteRes, profileRes] = await Promise.all([
       axios.get(`${BASE_URL}/quote`, {
-        params: { symbol: finnhubSymbol, token: FINNHUB_KEY },
+        params: { symbol, token: FINNHUB_KEY },
       }),
       axios.get(`${BASE_URL}/stock/profile2`, {
-        params: { symbol: finnhubSymbol, token: FINNHUB_KEY },
+        params: { symbol, token: FINNHUB_KEY },
       }),
     ]);
 
