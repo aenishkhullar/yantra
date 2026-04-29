@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="170 50 340 340" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Yantra Favicon</title>
+  <defs>
+    <mask id="favicon-mask" maskUnits="userSpaceOnUse">
+      <rect x="170" y="50" width="340" height="340" fill="white"/>
+      <rect x="265" y="90" width="148" height="148" fill="black" rx="2"/>
+    </mask>
+  </defs>
+
+  <text x="340" y="240" text-anchor="middle" style="fill:rgb(232, 237, 247); font-family:'Noto Sans Devanagari', Mangal, 'Arial Unicode MS', sans-serif; font-size:140px; font-weight:600; text-anchor:middle;">यंत्र</text>
+
+  <polyline points="180,226 220,215 258,220 290,198 318,202 340,185 365,190 395,168 430,174 460,152 500,158" mask="url(#favicon-mask)" style="fill:none; stroke:rgb(34, 197, 94); stroke-width:8px; stroke-linecap:round; stroke-linejoin:round;"/>
+
+  <circle cx="500" cy="158" r="10" style="fill:rgb(34, 197, 94);"/>
+</svg>

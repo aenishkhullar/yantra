@@ -166,18 +166,35 @@ const BorderGlow = ({
   );
 };
 
+const tickerItems = [
+  { sym: 'AAPL', price: '$267.61', change: '↑1.2%', pos: true },
+  { sym: 'MSFT', price: '$424.82', change: '↑0.05%', pos: true },
+  { sym: 'TSLA', price: '$378.67', change: '↑0.63%', pos: true },
+  { sym: 'NVDA', price: '$216.61', change: '↑4.00%', pos: true },
+  { sym: 'GOOGL', price: '$350.34', change: '↑1.72%', pos: true },
+  { sym: 'META', price: '$678.62', change: '↑0.53%', pos: true },
+  { sym: 'AMZN', price: '$261.12', change: '↓1.09%', pos: false },
+  { sym: 'NFLX', price: '$91.37', change: '↓1.16%', pos: false },
+  { sym: 'AMD', price: '$164.23', change: '↑2.1%', pos: true },
+  { sym: 'UBER', price: '$82.45', change: '↑0.8%', pos: true }
+];
+
 const Landing = () => {
   const navigate = useNavigate();
 
   return (
     <div style={{ backgroundColor: '#000000', minHeight: '100vh', color: '#f0f0f0', fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Commit+Mono&family=Inter:wght@400;500;600;700;800&display=swap');
 
         * {
           box-sizing: border-box;
           margin: 0;
           padding: 0;
+        }
+
+        html {
+          scroll-behavior: smooth;
         }
 
         body {
@@ -270,8 +287,13 @@ const Landing = () => {
           border-radius: var(--border-radius);
           background: var(--card-bg);
           overflow: hidden;
-          transition: transform 0.2s ease;
+          transition: transform 0.2s ease, border-color 0.2s ease;
           border: 2px solid rgba(214, 235, 253, 0.19);
+        }
+
+        .border-glow-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(214, 235, 253, 0.35);
         }
 
         .border-glow-inner {
@@ -355,6 +377,39 @@ const Landing = () => {
           align-items: center;
           justify-content: center;
           margin: 0 auto 20px;
+          transition: box-shadow 0.2s ease;
+        }
+
+        .number-circle:hover {
+          box-shadow: 0 0 12px rgba(59,158,255,0.15);
+        }
+
+        @keyframes ticker {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+
+        .ticker-strip {
+          margin-top: 48px;
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .ticker-inner {
+          display: flex;
+          gap: 32px;
+          white-space: nowrap;
+          animation: ticker 30s linear infinite;
+        }
+
+        .ticker-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 9999px;
+          border: 1px solid rgba(214, 235, 253, 0.19);
+          background: rgba(255, 255, 255, 0.02);
         }
 
         @media (max-width: 768px) {
@@ -402,7 +457,9 @@ const Landing = () => {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        backgroundColor: '#000000',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(214, 235, 253, 0.19)'
       }} className="section-padding">
         {/* Left — Logo */}
@@ -417,26 +474,24 @@ const Landing = () => {
 
         {/* Center — Nav links */}
         <div className="nav-links-center" style={{ display: 'flex', gap: '32px' }}>
-          <span className="nav-link">Markets</span>
-          <span className="nav-link">Simulator</span>
-          <span className="nav-link">Portfolio</span>
-          <span className="nav-link">Analytics</span>
-          <span className="nav-link">Academy</span>
+          <span className="nav-link">Home</span>
+          <span className="nav-link">About</span>
+          <span className="nav-link">Contact</span>
         </div>
 
         {/* Right — CTAs */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
-            className="secondary-btn cta-btn-sm" 
+            className="primary-btn cta-btn-sm" 
             onClick={() => navigate('/register')}
           >
-            Connect Wallet
+            Get Started
           </button>
           <button 
-            className="orange-btn" 
-            onClick={() => navigate('/register')}
+            className="secondary-btn cta-btn-sm" 
+            onClick={() => navigate('/login')}
           >
-            Place Trade
+            Login
           </button>
         </div>
       </nav>
@@ -445,41 +500,71 @@ const Landing = () => {
       <section className="hero-section section-padding" style={{
         padding: '120px 48px 100px',
         textAlign: 'center',
-        backgroundColor: '#000000'
+        backgroundColor: '#000000',
+        position: 'relative'
       }}>
-        <h1 className="hero-headline fade-up" style={{
-          fontSize: '72px',
-          fontWeight: 800,
-          color: '#f0f0f0',
-          lineHeight: 1.05,
-          letterSpacing: '-2px',
-          maxWidth: '800px',
-          margin: '0 auto',
-          animationDelay: '0ms'
-        }}>
-          Trade without the risk.
-        </h1>
-        <p className="fade-up" style={{
-          fontSize: '18px',
-          fontWeight: 400,
-          color: '#a1a4a5',
-          lineHeight: 1.5,
-          maxWidth: '480px',
-          margin: '20px auto 0',
-          animationDelay: '100ms'
-        }}>
-          A real-market simulator. Virtual capital. Zero consequences.
-        </p>
-        <div className="fade-up" style={{
-          display: 'flex',
-          gap: '12px',
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginTop: '40px',
-          animationDelay: '200ms'
-        }}>
-          <button className="primary-btn" onClick={() => navigate('/register')}>Get Started</button>
-          <button className="secondary-btn" onClick={() => navigate('/login')}>Login</button>
+        {/* Glow behind headline */}
+        <div style={{
+          position: 'absolute',
+          width: '600px',
+          height: '400px',
+          borderRadius: '9999px',
+          background: 'radial-gradient(circle, rgba(59,158,255,0.06) 0%, transparent 70%)',
+          zIndex: 0,
+          top: '20%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1 className="hero-headline fade-up" style={{
+            fontSize: '72px',
+            fontWeight: 800,
+            color: '#f0f0f0',
+            lineHeight: 1.05,
+            letterSpacing: '-2px',
+            maxWidth: '800px',
+            margin: '0 auto',
+            animationDelay: '0ms'
+          }}>
+            Trade without the risk.
+          </h1>
+          <p className="fade-up" style={{
+            fontSize: '18px',
+            fontWeight: 400,
+            color: '#a1a4a5',
+            lineHeight: 1.5,
+            maxWidth: '480px',
+            margin: '20px auto 0',
+            animationDelay: '100ms'
+          }}>
+            A real-market simulator. Virtual capital. Zero consequences.
+          </p>
+          <div className="fade-up" style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: '40px',
+            animationDelay: '200ms'
+          }}>
+            <button className="primary-btn" style={{ backgroundColor: '#FF801F' }} onClick={() => navigate('/register')}>Connect Wallet</button>
+            <button className="secondary-btn" onClick={() => navigate('/register')}>Place Trade</button>
+          </div>
+        </div>
+
+        {/* Ticker Strip */}
+        <div className="ticker-strip">
+          <div className="ticker-inner">
+            {[...tickerItems, ...tickerItems].map((item, i) => (
+              <div key={i} className="ticker-item">
+                <span style={{ fontFamily: 'Inter', fontSize: '12px', color: '#464a4d' }}>{item.sym}</span>
+                <span style={{ fontFamily: "'Commit Mono', monospace", fontSize: '12px', color: '#a1a4a5' }}>{item.price}</span>
+                <span style={{ fontFamily: "'Commit Mono', monospace", fontSize: '12px', color: item.pos ? '#11ff99' : '#ff2047' }}>{item.change}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -492,7 +577,7 @@ const Landing = () => {
               desc: 'Experience real-time price feeds and order book depth exactly as they appear in live trading environments.',
               icon: <BarChart2 size={18} color="#ff801f" />,
               bg: 'rgba(255,128,31,0.15)',
-              glow: '24 100 56', // Orange-ish HSL
+              glow: '24 100 56',
               delay: 300
             },
             {
@@ -508,7 +593,7 @@ const Landing = () => {
               desc: 'Detailed post-trade analysis and P&L tracking to refine your edge before committing real funds.',
               icon: <TrendingUp size={18} color="#3b9eff" />,
               bg: 'rgba(59,158,255,0.15)',
-              glow: '210 100 62', // Blue-ish HSL
+              glow: '210 100 62',
               delay: 400
             },
             {
@@ -516,7 +601,7 @@ const Landing = () => {
               desc: 'Simulated matching engine mimics the speed and slippage of high-performance institutional platforms.',
               icon: <Zap size={18} color="#11ff99" />,
               bg: 'rgba(17,255,153,0.15)',
-              glow: '154 100 53', // Green-ish HSL
+              glow: '154 100 53',
               delay: 450
             }
           ].map((feature, i) => (
@@ -536,6 +621,30 @@ const Landing = () => {
               </BorderGlow>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* SECTION 3.5 — STATS */}
+      <section className="section-padding" style={{
+        padding: '80px 48px',
+        textAlign: 'center',
+        backgroundColor: 'rgba(255,255,255,0.01)',
+        borderTop: '1px solid rgba(214, 235, 253, 0.19)',
+        borderBottom: '1px solid rgba(214, 235, 253, 0.19)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '80px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: 'Inter', fontSize: '48px', fontWeight: 700, color: '#f0f0f0', letterSpacing: '-2px' }}>$100,000</div>
+            <div style={{ fontFamily: 'Inter', fontSize: '14px', color: '#a1a4a5', marginTop: '8px' }}>Starting virtual capital</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Inter', fontSize: '48px', fontWeight: 700, color: '#f0f0f0', letterSpacing: '-2px' }}>15+</div>
+            <div style={{ fontFamily: 'Inter', fontSize: '14px', color: '#a1a4a5', marginTop: '8px' }}>Stocks to trade</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Inter', fontSize: '48px', fontWeight: 700, color: '#f0f0f0', letterSpacing: '-2px' }}>Real-time</div>
+            <div style={{ fontFamily: 'Inter', fontSize: '14px', color: '#a1a4a5', marginTop: '8px' }}>Live market prices</div>
+          </div>
         </div>
       </section>
 
@@ -614,8 +723,9 @@ const Landing = () => {
           alignItems: 'center',
           marginBottom: '16px'
         }}>
-          <div style={{ fontSize: '12px', color: '#464a4d' }}>
-            Built by Altawebstudio.xyz
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: '#f0f0f0', letterSpacing: '-0.5px' }}>yantra</span>
+            <span style={{ fontSize: '13px', color: '#464a4d', fontFamily: 'Inter' }}>यंत्र</span>
           </div>
           <div style={{ display: 'flex', gap: '24px' }}>
             <span className="nav-link" style={{ fontSize: '12px' }}>Privacy Policy</span>
