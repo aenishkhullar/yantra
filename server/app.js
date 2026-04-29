@@ -6,6 +6,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/user', userRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
