@@ -1,13 +1,14 @@
 const Order = require('../models/Order');
 const Position = require('../models/Position');
 const User = require('../models/User');
-const { getQuote } = require('./yahooFinanceService');
 const { calcUnrealisedPnL, calcRealisedPnL } = require('../utils/calcPnL');
+const { isMarketOpen } = require('../utils/marketHours');
+const { getLatestPrice } = require('./priceBroadcaster');
 
 const executeLimitBuy = async (order, currentPrice) => {
   try {
     const user = await User.findById(order.userId);
-    const total = parseFloat((order.price * order.quantity).toFixed(2));
+    const total = parseFloat((currentPrice * order.quantity).toFixed(2));
 
     if (user.virtualBalance < total) {
       // Cancel order — insufficient funds
@@ -70,13 +71,20 @@ const executeLimitBuy = async (order, currentPrice) => {
 const executeStopLoss = async (order, position, currentPrice) => {
   try {
     const sellQty = position.quantity;
-    const total = parseFloat((currentPrice * sellQty).toFixed(2));
+    const saleProceeds = parseFloat((currentPrice * sellQty).toFixed(2));
     const realisedPnL = calcRealisedPnL(position, currentPrice, sellQty);
 
     // Credit balance
     const user = await User.findById(order.userId);
-    const newBalance = parseFloat((user.virtualBalance + total).toFixed(2));
-    await User.findByIdAndUpdate(order.userId, { $set: { virtualBalance: newBalance } });
+    const newBalance = parseFloat((user.virtualBalance + saleProceeds).toFixed(2));
+
+    await User.findByIdAndUpdate(
+      order.userId,
+      { $set: { virtualBalance: newBalance } },
+      { new: true }
+    );
+
+    console.log(`[Engine] Stop-loss credit: $${saleProceeds} → balance: $${newBalance}`);
 
     // Close position
     position.quantity = 0;
@@ -100,44 +108,34 @@ const executeStopLoss = async (order, position, currentPrice) => {
 };
 
 const runEngine = async () => {
+  if (!isMarketOpen()) {
+    // Market closed — no point checking limit orders
+    // Prices are not moving so no triggers will fire
+    return;
+  }
+
   try {
-    // Get all pending orders
     const pendingOrders = await Order.find({ status: 'pending' });
     if (pendingOrders.length === 0) return;
 
     console.log(`[Engine] Checking ${pendingOrders.length} pending orders...`);
 
-    // Group by symbol to minimize API calls
-    const symbols = [...new Set(pendingOrders.map((o) => o.symbol))];
-
-    const quotes = {};
-    for (const symbol of symbols) {
-      try {
-        const quote = await getQuote(symbol);
-        if (quote) quotes[symbol] = quote.price;
-        await new Promise((r) => setTimeout(r, 200)); // rate limit protection
-      } catch (e) {
-        console.warn(`[Engine] Could not fetch ${symbol}`);
-      }
-    }
-
     for (const order of pendingOrders) {
-      const currentPrice = quotes[order.symbol];
-      if (!currentPrice) continue;
+      // Use broadcaster's in-memory price — NO extra API call
+      const priceData = getLatestPrice(order.symbol);
+      if (!priceData || !priceData.price) continue;
+
+      const currentPrice = priceData.price;
 
       if (order.orderType === 'limit' && order.side === 'buy') {
-        // Execute if current price <= limit price (price dropped to target)
         if (currentPrice <= order.limitPrice) {
           await executeLimitBuy(order, currentPrice);
         }
       }
 
       if (order.orderType === 'limit' && order.side === 'sell') {
-        // Execute if current price >= limit price (price rose to target)
         const position = await Position.findOne({
-          userId: order.userId,
-          symbol: order.symbol,
-          isOpen: true,
+          userId: order.userId, symbol: order.symbol, isOpen: true,
         });
         if (position && currentPrice >= order.limitPrice) {
           await executeStopLoss(order, position, currentPrice);
@@ -145,11 +143,8 @@ const runEngine = async () => {
       }
 
       if (order.orderType === 'stop-loss') {
-        // Execute if current price <= stop-loss price (price dropped to danger level)
         const position = await Position.findOne({
-          userId: order.userId,
-          symbol: order.symbol,
-          isOpen: true,
+          userId: order.userId, symbol: order.symbol, isOpen: true,
         });
         if (position && currentPrice <= order.stopLossPrice) {
           await executeStopLoss(order, position, currentPrice);
@@ -161,10 +156,10 @@ const runEngine = async () => {
   }
 };
 
-// Start the engine — check every 30 seconds
+// Run 65 seconds after broadcaster (slightly offset so prices are fresh)
 const startSimulationEngine = () => {
-  console.log('[Engine] Simulation engine started — checking every 30s');
-  setInterval(runEngine, 30000);
+  console.log('[Engine] Simulation engine started — checking every 65s');
+  setInterval(runEngine, 65 * 1000);
 };
 
 module.exports = { startSimulationEngine };

@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { MarketProvider } from './context/MarketContext';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -33,7 +34,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return <AppLayout />;
+  return (
+    <MarketProvider>
+      <AppLayout />
+    </MarketProvider>
+  );
 };
 
 const router = createBrowserRouter([

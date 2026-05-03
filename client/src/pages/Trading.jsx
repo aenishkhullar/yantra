@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getPrice, getHistory } from '../services/marketService';
+import { getHistory } from '../services/marketService';
 import { placeBuyOrder, placeSellOrder } from '../services/orderService';
 import { useAuth } from '../context/AuthContext';
+import { useMarket } from '../context/MarketContext';
 import { BarChart2 } from 'lucide-react';
 import CandlestickChart from '../components/charts/CandlestickChart';
 
@@ -23,8 +24,8 @@ const Trading = () => {
   const { symbol: rawSymbol } = useParams();
   const symbol = rawSymbol.toUpperCase();
   const { user, refreshUser } = useAuth();
-  
-  const [quote, setQuote] = useState(null);
+  const { prices, connected, marketOpen, fromCache } = useMarket();
+  const liveQuote = prices[symbol?.toUpperCase()] || null;
   const [mode, setMode] = useState('Buy');
   const [orderType, setOrderType] = useState('Market');
   const [quantity, setQuantity] = useState(1);
@@ -35,25 +36,6 @@ const Trading = () => {
   const [chartData, setChartData] = useState([]);
   const [chartPeriod, setChartPeriod] = useState('1mo');
   const [chartLoading, setChartLoading] = useState(true);
-  
-  const [submitting, setSubmitting] = useState(false);
-  const [orderResult, setOrderResult] = useState(null);
-  const [orderError, setOrderError] = useState(null);
-
-  const virtualBalance = user?.virtualBalance || 100000;
-
-  useEffect(() => {
-    const fetchQuote = async () => {
-      if (!symbol) return;
-      try {
-        const data = await getPrice(symbol);
-        setQuote(data);
-      } catch (err) {}
-    };
-    fetchQuote();
-    const interval = setInterval(fetchQuote, 30000);
-    return () => clearInterval(interval);
-  }, [symbol]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -75,8 +57,18 @@ const Trading = () => {
     console.log('[Trading] chartData updated:', chartData.length, 'candles');
   }, [chartData]);
 
+  const [submitting, setSubmitting] = useState(false);
+  const [orderResult, setOrderResult] = useState(null);
+  const [orderError, setOrderError] = useState(null);
+
+  const virtualBalance = user?.virtualBalance || 100000;
+
+  const currentPrice = liveQuote?.price || 0;
+  const priceChangePercent = liveQuote?.changePercent || 0;
+  const priceChange = liveQuote?.change || 0;
+
   const stockName = STOCK_META[symbol]?.name || symbol;
-  const isPositive = quote?.changePercent >= 0;
+  const isPositive = priceChangePercent >= 0;
   const currency = '$';
 
   const showToast = (message, type = 'success') => {
@@ -182,9 +174,9 @@ const Trading = () => {
 
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '36px', fontWeight: 400, color: '#f0f0f0', lineHeight: 1 }}>
-            {quote ? `${currency}${quote.price?.toFixed(2)}` : '--'}
+            {currentPrice ? `${currency}${currentPrice.toFixed(2)}` : '--'}
           </div>
-          {quote && (
+          {liveQuote && (
             <div style={{
               fontFamily: "'Inter', ui-sans-serif, system-ui",
               fontSize: '11px',
@@ -195,12 +187,26 @@ const Trading = () => {
               display: 'inline-block',
               marginTop: '4px'
             }}>
-              {isPositive ? '+' : ''}{quote.changePercent?.toFixed(2)}%
+              {isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '6px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#11ff99', boxShadow: '0 0 8px #11ff99', animation: 'pulse 2s infinite' }}></div>
-            <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '10px', color: '#11ff99', letterSpacing: '0.16em' }}>LIVE</span>
+            {connected && marketOpen ? (
+              <>
+                <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#11ff99', boxShadow: '0 0 8px #11ff99', animation: 'pulse 2s infinite' }}></div>
+                <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '10px', color: '#11ff99', letterSpacing: '0.16em' }}>LIVE</span>
+              </>
+            ) : connected && !marketOpen ? (
+              <>
+                <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#ffc53d' }}></div>
+                <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '10px', color: '#ffc53d', letterSpacing: '0.16em' }}>CLOSED</span>
+              </>
+            ) : (
+              <>
+                <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#464a4d' }}></div>
+                <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '10px', color: '#464a4d', letterSpacing: '0.16em' }}>OFFLINE</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -209,7 +215,7 @@ const Trading = () => {
             <div key={stat} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '10px', color: '#464a4d', textTransform: 'uppercase' }}>{stat}</span>
               <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '13px', color: '#f0f0f0' }}>
-                {quote ? (stat === 'Volume' ? quote[stat.toLowerCase()] : `${currency}${quote[stat.toLowerCase()]?.toFixed(2)}`) : '--'}
+                {liveQuote ? (stat === 'Volume' ? liveQuote[stat.toLowerCase()] : `${currency}${liveQuote[stat.toLowerCase()]?.toFixed(2)}`) : '--'}
               </span>
             </div>
           ))}
@@ -442,7 +448,7 @@ const Trading = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '12px', color: '#a1a4a5' }}>Estimated Total</span>
                 <span style={{ fontFamily: "'Commit Mono', ui-monospace, monospace", fontSize: '13px', color: '#f0f0f0' }}>
-                  {currency}{quote ? (quantity * quote.price).toFixed(2) : '0.00'}
+                  {currency}{liveQuote ? (quantity * liveQuote.price).toFixed(2) : '0.00'}
                 </span>
               </div>
               <div style={{ borderTop: '1px solid rgba(214, 235, 253, 0.19)' }}></div>

@@ -1,44 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-function getMarketStatus() {
-  const now = new Date();
-  
-  // Use Intl.DateTimeFormat to get the current time in New York (handles EDT/EST automatically)
-  const nyTimeStr = now.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
-  const nyDate = new Date(nyTimeStr);
-  
-  const hour = nyDate.getHours();
-  const minute = nyDate.getMinutes();
-  const day = nyDate.getDay(); // 0 = Sunday, 6 = Saturday
-  const isWeekday = day >= 1 && day <= 5;
-  const totalMinutes = hour * 60 + minute;
-
-  // NYSE hours: 9:30 AM ET to 4:00 PM ET
-  const nyseOpen = 9 * 60 + 30;  // 570 minutes
-  const nyseClose = 16 * 60;      // 960 minutes
-  
-  const isOpen = isWeekday && totalMinutes >= nyseOpen && totalMinutes < nyseClose;
-
-  if (isOpen) {
-    return { label: 'Market Open', color: '#11ff99', open: true };
-  } else {
-    return { label: 'Market Closed', color: '#ff2047', open: false };
-  }
-}
+import { useMarket } from '../../context/MarketContext';
 
 const Topbar = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const [marketStatus, setMarketStatus] = useState(getMarketStatus());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMarketStatus(getMarketStatus());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const { connected, marketOpen, fromCache } = useMarket();
 
   const getPageTitle = () => {
     const path = location.pathname;
@@ -91,19 +59,34 @@ const Topbar = () => {
           gap: '6px'
         }}>
           <div style={{
-            width: '4px',
-            height: '4px',
+            width: '6px',
+            height: '6px',
             borderRadius: '50%',
-            background: marketStatus.color,
-            boxShadow: `0 0 6px ${marketStatus.color}`,
-            animation: marketStatus.open ? 'pulse 2s infinite' : 'none'
+            background: connected ? (marketOpen ? '#11ff99' : '#ff2047') : '#ffc53d',
+            boxShadow: connected && marketOpen ? '0 0 6px #11ff99' : 'none',
+            animation: connected && marketOpen ? 'pulse 2s infinite' : !connected ? 'pulse 1s infinite' : 'none'
           }}></div>
           <span style={{
             fontFamily: "'Inter', ui-sans-serif, system-ui",
             fontSize: '11px',
-            color: '#a1a4a5'
+            color: '#a1a4a5',
+            display: 'flex',
+            alignItems: 'center'
           }}>
-            {marketStatus.label}
+            {connected ? (marketOpen ? 'NYSE Open' : 'Market Closed') : 'Reconnecting...'}
+            {fromCache && (
+              <span style={{
+                fontFamily: "'Commit Mono', ui-monospace, monospace",
+                fontSize: '9px',
+                color: '#464a4d',
+                border: '1px solid rgba(214, 235, 253, 0.19)',
+                borderRadius: '3px',
+                padding: '1px 5px',
+                marginLeft: '6px'
+              }}>
+                Cached
+              </span>
+            )}
           </span>
         </div>
 

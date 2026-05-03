@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllPrices } from '../services/marketService';
-import { Search, RotateCw, AlertCircle } from 'lucide-react';
+import { useMarket } from '../context/MarketContext';
+import { Search, RotateCw, AlertCircle, Clock } from 'lucide-react';
 
 const SkeletonRows = () => (
   <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -20,29 +20,12 @@ const SkeletonRows = () => (
   </div>
 );
 
-const ErrorState = ({ message, onRetry }) => (
+const ErrorState = ({ message }) => (
   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
     <div style={{ border: '1px solid rgba(214, 235, 253, 0.19)', borderRadius: '16px', padding: '48px', textAlign: 'center', maxWidth: '400px' }}>
       <AlertCircle size={32} color="#ff2047" style={{ marginBottom: '12px' }} />
       <div style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '15px', color: '#f0f0f0' }}>Failed to load market data</div>
       <div style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '13px', color: '#a1a4a5', marginTop: '4px' }}>{message}</div>
-      <button 
-        onClick={onRetry}
-        style={{
-          marginTop: '16px',
-          padding: '8px 20px',
-          borderRadius: '9999px',
-          background: '#ffffff',
-          color: '#000000',
-          border: 'none',
-          fontFamily: "'Inter', ui-sans-serif, system-ui",
-          fontSize: '13px',
-          fontWeight: 500,
-          cursor: 'pointer'
-        }}
-      >
-        Retry
-      </button>
     </div>
   </div>
 );
@@ -149,46 +132,27 @@ const StockRow = ({ stock, index }) => {
 };
 
 const Markets = () => {
-  const [stocks, setStocks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { prices, connected, marketOpen, fromCache, lastUpdated } = useMarket();
+
+  const allStocks = useMemo(() => Object.values(prices), [prices]);
+  const loading = allStocks.length === 0;
+
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('US Stocks');
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false);
 
-  const fetchPrices = async () => {
-    setIsSpinning(true);
-    try {
-      setError(null);
-      const data = await getAllPrices();
-      setStocks(data);
-      setLastUpdated(new Date());
-    } catch (err) {
-      console.error('Markets fetch error:', err);
-      setError(err.response?.data?.message || 'Failed to load market data');
-    } finally {
-      setLoading(false);
-      setTimeout(() => setIsSpinning(false), 500);
-    }
-  };
-
-  useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const filteredStocks = stocks.filter((stock) => {
+  const filteredStocks = allStocks.filter((stock) => {
     const matchesSearch =
       search.trim() === '' ||
       stock.symbol.toLowerCase().includes(search.toLowerCase()) ||
       (stock.name && stock.name.toLowerCase().includes(search.toLowerCase()));
 
-    const matchesTab = true; // All stocks are US now
-
-    return matchesSearch && matchesTab;
+    return matchesSearch;
   });
+
+  const getSubtitle = () => {
+    if (fromCache) return `${allStocks.length} stocks · last session prices`;
+    if (marketOpen) return `${allStocks.length} stocks · updates every 60s`;
+    return `${allStocks.length} stocks · market closed`;
+  };
 
   return (
     <div>
@@ -198,13 +162,41 @@ const Markets = () => {
             Markets
           </h1>
           <div style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '13px', color: '#a1a4a5' }}>
-            {stocks.length} stocks · prices update every 60s
+            {getSubtitle()}
           </div>
         </div>
-        <div style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '12px', color: '#464a4d' }}>
-          {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Updating...'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          {connected ? (
+            <>
+              <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#11ff99', boxShadow: '0 0 6px #11ff99' }}></div>
+              <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '11px', color: '#11ff99' }}>Live</span>
+            </>
+          ) : (
+            <>
+              <div style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#ffc53d', animation: 'pulse 1s infinite' }}></div>
+              <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '11px', color: '#ffc53d' }}>Reconnecting...</span>
+            </>
+          )}
         </div>
       </div>
+
+      {fromCache && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(255,197,61,0.06)',
+          border: '1px solid rgba(255,197,61,0.2)',
+          borderRadius: '8px',
+          padding: '8px 16px',
+          marginBottom: '16px'
+        }}>
+          <Clock size={13} color="#ffc53d" />
+          <span style={{ fontFamily: "'Inter', ui-sans-serif, system-ui", fontSize: '12px', color: '#ffc53d' }}>
+            Market closed — showing last known prices from {lastUpdated ? lastUpdated.toLocaleDateString() : 'last session'}
+          </span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
         <div style={{ flex: 1, maxWidth: '320px', position: 'relative' }}>
@@ -246,24 +238,6 @@ const Markets = () => {
             US Stocks
           </button>
         </div>
-
-        <button 
-          onClick={fetchPrices}
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '9999px',
-            border: '1px solid rgba(214, 235, 253, 0.19)',
-            background: 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          <RotateCw size={14} color="#a1a4a5" style={{ animation: isSpinning ? 'spin 1s linear infinite' : 'none' }} />
-        </button>
       </div>
 
       <div style={{ width: '100%' }}>
@@ -289,19 +263,15 @@ const Markets = () => {
 
         {loading && <SkeletonRows />}
 
-        {!loading && error && (
-          <ErrorState message={error} onRetry={fetchPrices} />
+        {!loading && !connected && allStocks.length === 0 && (
+          <ErrorState message="Unable to connect to price feed. Check your connection." />
         )}
 
-        {!loading && !error && stocks.length === 0 && (
-          <EmptyState message="No market data loaded. Check server logs." />
-        )}
-
-        {!loading && !error && stocks.length > 0 && filteredStocks.length === 0 && (
+        {!loading && allStocks.length > 0 && filteredStocks.length === 0 && (
           <EmptyState message={`No stocks match "${search}"`} />
         )}
 
-        {!loading && !error && filteredStocks.length > 0 && (
+        {!loading && filteredStocks.length > 0 && (
           <div>
             {filteredStocks.map((stock, index) => (
               <StockRow key={stock.symbol} stock={stock} index={index + 1} />
@@ -314,6 +284,11 @@ const Markets = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.5; }
+          100% { opacity: 1; }
         }
         .skeleton-box {
           background: #111;

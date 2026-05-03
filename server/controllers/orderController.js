@@ -169,6 +169,26 @@ const placeBuyOrder = async (req, res) => {
 
 // POST /api/orders/sell
 const placeSellOrder = async (req, res) => {
+  /*
+   * SELL ORDER BALANCE LOGIC
+   * ─────────────────────────────────────────────────────────
+   * When user sells shares, they receive the full sale proceeds
+   * back into their virtual balance. This covers both cases:
+   *
+   * PROFIT SCENARIO:
+   *   Bought 1 share @ $100 → balance was reduced by $100
+   *   Sell  1 share @ $110 → balance credited with $110
+   *   Net effect: +$10 profit on balance ✓
+   *
+   * LOSS SCENARIO:
+   *   Bought 1 share @ $100 → balance was reduced by $100
+   *   Sell  1 share @ $90  → balance credited with $90
+   *   Net effect: -$10 loss on balance ✓
+   *
+   * Formula: newBalance = currentBalance + (sellPrice × quantity)
+   * RealisedPnL = (sellPrice - avgBuyPrice) × quantity
+   * ─────────────────────────────────────────────────────────
+   */
   try {
     const { symbol, quantity } = req.body;
     const userId = req.user._id;
@@ -202,18 +222,19 @@ const placeSellOrder = async (req, res) => {
 
     const executionPrice = quote.price;
     const sellQty = parseInt(quantity);
-    const total = parseFloat((executionPrice * sellQty).toFixed(2));
-    const realisedPnL = calcRealisedPnL(position, executionPrice, sellQty);
+    
+    // Credit = full sale proceeds (original investment back + profit/loss)
+    const saleProceeds = parseFloat((executionPrice * sellQty).toFixed(2));
+    const realisedPnL = parseFloat(
+      ((executionPrice - position.averagePrice) * sellQty).toFixed(2)
+    );
 
     // Credit balance
     const user = await User.findById(userId);
     
-    const newBalance = parseFloat((user.virtualBalance + total).toFixed(2));
-
-    console.log(`[Sell] User ${userId} selling ${quantity} x ${symbol}`);
-    console.log(`[Sell] Execution price: ${executionPrice}, Total: ${total}`);
-    console.log(`[Sell] Realised P&L: ${realisedPnL}`);
-    console.log(`[Sell] New balance after credit: ${newBalance}`);
+    const newBalance = parseFloat(
+      (user.virtualBalance + saleProceeds).toFixed(2)
+    );
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -221,7 +242,9 @@ const placeSellOrder = async (req, res) => {
       { new: true }
     );
 
-    console.log(`[Order] Balance credited: ${user.virtualBalance} → ${newBalance}`);
+    console.log(`[Sell] Sale proceeds: $${saleProceeds}`);
+    console.log(`[Sell] Balance: $${user.virtualBalance} → $${newBalance}`);
+    console.log(`[Sell] Realised P&L: $${realisedPnL}`);
 
     // Create sell order
     const order = await Order.create({
@@ -232,7 +255,7 @@ const placeSellOrder = async (req, res) => {
       orderType: 'market',
       quantity: sellQty,
       price: executionPrice,
-      total,
+      total: saleProceeds,
       status: 'executed',
       realisedPnL: realisedPnL,
     });
